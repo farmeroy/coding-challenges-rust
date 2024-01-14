@@ -72,43 +72,38 @@ fn format_output(data: FileData, args: Args) -> String {
     )
 }
 
-fn get_text_data(file: &str) -> Result<FileData, Error> {
-    match File::open(file) {
-        Err(e) => {
-            eprintln!("Error opening file: {e}");
-            Err(e)
-        }
-        Ok(file) => {
-            let mut reader = BufReader::new(file);
-            let mut lines_count = 0;
-            let mut bytes_count = 0;
-            let mut words_count = 0;
-            let mut chars_count = 0;
+fn get_text_data(file_name: &str) -> Result<FileData, Error> {
+    let mut reader: Box<dyn BufRead> = match File::open(file_name) {
+        Err(_) => Box::new(BufReader::new(io::stdin())),
+        Ok(file) => Box::new(BufReader::new(file)),
+    };
+    let mut lines_count = 0;
+    let mut bytes_count = 0;
+    let mut words_count = 0;
+    let mut chars_count = 0;
 
-            loop {
-                let mut line = String::new();
-                let line_bytes = reader.read_line(&mut line).expect("couldn't read line");
-                if line_bytes == 0 {
-                    break;
-                };
+    loop {
+        let mut line = String::new();
+        let line_bytes = reader.read_line(&mut line).expect("couldn't read line");
+        if line_bytes == 0 {
+            break;
+        };
 
-                // we use split_whitespace to account for any amount/kind of whitespace
-                let words = line.trim().split_whitespace().count();
-                let chars = line.chars().count();
+        // we use split_whitespace to account for any amount/kind of whitespace
+        let words = line.trim().split_whitespace().count();
+        let chars = line.chars().count();
 
-                bytes_count += line_bytes;
-                lines_count += 1;
-                words_count += words;
-                chars_count += chars;
-            }
-            Ok(FileData {
-                lines: lines_count,
-                bytes: bytes_count,
-                words: words_count,
-                chars: chars_count,
-            })
-        }
+        bytes_count += line_bytes;
+        lines_count += 1;
+        words_count += words;
+        chars_count += chars;
     }
+    Ok(FileData {
+        lines: lines_count,
+        bytes: bytes_count,
+        words: words_count,
+        chars: chars_count,
+    })
 }
 
 #[cfg(test)]
