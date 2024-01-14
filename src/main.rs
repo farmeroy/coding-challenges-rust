@@ -76,7 +76,6 @@ fn get_text_data(file: &str) -> Result<FileData, Error> {
     match File::open(file) {
         Err(e) => {
             eprintln!("Error opening file: {e}");
-            let mut reader = BufReader::new(io::stdin());
             Err(e)
         }
         Ok(file) => {
