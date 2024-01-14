@@ -17,12 +17,23 @@ struct Args {
     file_name: String,
 }
 
-impl Args {}
+enum WCTarget {
+    UseStdin,
+    TryFile,
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let file_name = args.last().expect("No filename give").to_string();
+    let wc_target = match args.len() == 1 {
+        true => WCTarget::UseStdin,
+        false => WCTarget::TryFile,
+    };
+
+    let file_name = match wc_target {
+        WCTarget::UseStdin => "".to_owned(),
+        WCTarget::TryFile => args.last().expect("No filename give").to_string(),
+    };
 
     let mut args = Args {
         bytes: args.iter().any(|arg| arg == "-c"),
@@ -31,7 +42,7 @@ fn main() {
         chars: args.iter().any(|arg| arg == "-m"),
         file_name: file_name.clone(),
     };
-    let file_data = get_text_data(&args.file_name).unwrap();
+    let file_data = get_text_data(&args.file_name, wc_target).unwrap();
 
     if !args.bytes && !args.lines && !args.words && !args.chars {
         args = Args {
@@ -72,10 +83,14 @@ fn format_output(data: FileData, args: Args) -> String {
     )
 }
 
-fn get_text_data(file_name: &str) -> Result<FileData, Error> {
-    let mut reader: Box<dyn BufRead> = match File::open(file_name) {
-        Err(_) => Box::new(BufReader::new(io::stdin())),
-        Ok(file) => Box::new(BufReader::new(file)),
+fn get_text_data(file_name: &str, wc_target: WCTarget) -> Result<FileData, Error> {
+    let mut reader: Box<dyn BufRead> = match wc_target {
+        WCTarget::TryFile => match File::open(file_name) {
+            // if we can't read the file, we assume there is std in
+            Err(_) => Box::new(BufReader::new(io::stdin())),
+            Ok(file) => Box::new(BufReader::new(file)),
+        },
+        WCTarget::UseStdin => Box::new(BufReader::new(io::stdin())),
     };
     let mut lines_count = 0;
     let mut bytes_count = 0;
