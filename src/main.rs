@@ -84,14 +84,21 @@ fn format_output(data: FileData, args: Args) -> String {
 }
 
 fn get_text_data(file_name: &str, wc_target: WCTarget) -> Result<FileData, Error> {
-    let mut reader: Box<dyn BufRead> = match wc_target {
+    let reader: Result<Box<dyn BufRead>, Error> = match wc_target {
         WCTarget::TryFile => match File::open(file_name) {
-            // if we can't read the file, we assume there is std in
-            Err(_) => Box::new(BufReader::new(io::stdin())),
-            Ok(file) => Box::new(BufReader::new(file)),
+            Err(e) => Err(e),
+            Ok(file) => Ok(Box::new(BufReader::new(file))),
         },
-        WCTarget::UseStdin => Box::new(BufReader::new(io::stdin())),
+        WCTarget::UseStdin => Ok(Box::new(BufReader::new(io::stdin()))),
     };
+
+    let mut reader = reader
+        .map_err(|_| {
+            eprintln!("No such file");
+            std::process::exit(1);
+        })
+        .unwrap();
+
     let mut lines_count = 0;
     let mut bytes_count = 0;
     let mut words_count = 0;
