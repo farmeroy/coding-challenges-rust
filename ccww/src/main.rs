@@ -130,12 +130,14 @@ fn get_text_data(file_name: &str, wc_target: WCTarget) -> Result<FileData, Error
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::Read};
+    use crate::{get_text_data, WCTarget};
 
     #[test]
-    fn test_bytes() {
-        let f = File::open("test.txt").expect("Cannot find test.txt");
-        let bytes = f.bytes().count();
-        assert_eq!(bytes, 342190);
+    fn test_get_text_data() {
+        let wc_target = WCTarget::TryFile;
+        let data = get_text_data("test.txt", wc_target).unwrap();
+        assert_eq!(data.bytes, 342190);
+        assert_eq!(data.lines, 7145);
+        assert_eq!(data.words, 58164);
     }
 }
