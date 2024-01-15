@@ -4,8 +4,13 @@ You can find the challenge description [here](https://codingchallenges.fyi/chall
 
 The challenge is to recreate a simplified version of the unix tool `wc` (word count).
 
+
   In the spirit of minimilism I opted *not* to use an external crate, such as `clap`, to parse my commands and arguments. 
-  Instead, I store the args, including the target filename, in a struct:
+  
+  (This is also a pretty naive solution: I just tried to solve the problem. 
+  I would love some feeback/comments on my approach, as I am still cutting my teeth in this world of software engineering.)
+  
+  I store the args, including the target filename, in a struct:
   
 ```rust
 struct Args {
